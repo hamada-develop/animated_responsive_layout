@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'destinations.dart';
 import 'models/data.dart' as data;
 import 'models/models.dart';
 import 'widgets/email_list_view.dart';
@@ -34,21 +35,46 @@ class _FeedState extends State<Feed> {
   late final _colorScheme = Theme.of(context).colorScheme;
   late final _backgroundColor = Color.alphaBlend(
     _colorScheme.primary.withAlpha(36),
-    _colorScheme.surface
+    _colorScheme.surface,
   );
+
+  int selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         color: _backgroundColor,
-        child: EmailListView(currentUser: widget.currentUser),
+        child: EmailListView(
+          currentUser: widget.currentUser,
+          onSelected: (int index) {
+            setState(() {
+              selectedIndex = index;
+            });
+          },
+          selectedIndex: selectedIndex,
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: _colorScheme.tertiaryContainer,
         foregroundColor: _colorScheme.onTertiaryContainer,
         onPressed: () {},
         child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: NavigationBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        onDestinationSelected: (index) {
+          setState(() {
+            selectedIndex = index;
+          });
+        },
+        destinations: destinations
+            .map<NavigationDestination>(
+              (e) =>
+                  NavigationDestination(icon: Icon(e.icon), label: e.label),
+            )
+            .toList(),
       ),
     );
   }
