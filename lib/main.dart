@@ -1,13 +1,14 @@
-import 'package:animated_responsive_layout/widgets/animated_floating_action_button.dart';
 import 'package:flutter/material.dart';
 
 import 'animations.dart';
-import 'destinations.dart';
 import 'models/data.dart' as data;
 import 'models/models.dart';
-import 'widgets/email_list_view.dart';
-import 'widgets/disappearing_bottom_navigation_bar.dart';  // Add import
+import 'transitions/list_detail_transition.dart';          // Add import
+import 'widgets/animated_floating_action_button.dart';
+import 'widgets/disappearing_bottom_navigation_bar.dart';
 import 'widgets/disappearing_navigation_rail.dart';
+import 'widgets/email_list_view.dart';
+import 'widgets/reply_list_view.dart';                     // Add import
 
 void main() {
   runApp(const MainApp());
@@ -19,7 +20,6 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       theme: ThemeData.light(),
       home: Feed(currentUser: data.user_0),
     );
@@ -35,13 +35,12 @@ class Feed extends StatefulWidget {
   State<Feed> createState() => _FeedState();
 }
 
-class _FeedState extends State<Feed> with SingleTickerProviderStateMixin{
+class _FeedState extends State<Feed> with SingleTickerProviderStateMixin {
   late final _colorScheme = Theme.of(context).colorScheme;
   late final _backgroundColor = Color.alphaBlend(
     _colorScheme.primary.withAlpha(36),
     _colorScheme.surface,
   );
-
   late final _controller = AnimationController(
     duration: const Duration(milliseconds: 1000),
     reverseDuration: const Duration(milliseconds: 1250),
@@ -53,7 +52,6 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin{
   late final _barAnimation = BarAnimation(parent: _controller);
 
   int selectedIndex = 0;
-
   bool controllerInitialized = false;
 
   @override
@@ -61,7 +59,6 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin{
     super.didChangeDependencies();
 
     final double width = MediaQuery.of(context).size.width;
-
     final AnimationStatus status = _controller.status;
     if (width > 600) {
       if (status != AnimationStatus.forward &&
@@ -80,6 +77,11 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin{
     }
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,15 +105,21 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin{
               Expanded(
                 child: Container(
                   color: _backgroundColor,
-                  child: EmailListView(
-                    selectedIndex: selectedIndex,
-                    onSelected: (index) {
-                      setState(() {
-                        selectedIndex = index;
-                      });
-                    },
-                    currentUser: widget.currentUser,
+                  // Update from here ...
+                  child: ListDetailTransition(
+                    animation: _railAnimation,
+                    one: EmailListView(
+                      selectedIndex: selectedIndex,
+                      onSelected: (index) {
+                        setState(() {
+                          selectedIndex = index;
+                        });
+                      },
+                      currentUser: widget.currentUser,
+                    ),
+                    two: const ReplyListView(),
                   ),
+                  // ... to here.
                 ),
               ),
             ],
@@ -133,11 +141,5 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin{
         );
       },
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }
